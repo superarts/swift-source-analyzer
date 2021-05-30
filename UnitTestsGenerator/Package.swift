@@ -21,9 +21,9 @@ let package = Package(
         ),
 		/*
         .package(
-            name: "SwiftWheel", // <- Not sure why this is needed, help? UPDATE: not needed anymore?
-            url: "https://github.com/superarts/swift-source-analyzer/SwiftWheel", 
-			.revision("486e1c9256d65cd8078985bab9b1af12430e4b9c")
+            name: "SwiftWheel", // <- Without this, `swift build` returns "unknown package 'SwiftWheel' in dependencies of target 'UnitTestsGenerator'"
+            url: "https://github.com/superarts/swift-source-analyzer", // <- Until 20210529, sub-directory inside a repo is not supported by SPM - see `SE-0292`
+			.revision("49f8e1f000441eb6d2f4a5e3679657a227c56ef3")
         ),
 		*/
     ],
