@@ -16,9 +16,16 @@ let package = Package(
             .upToNextMinor(from: "0.3.0")
         ),
         Package.Dependency.package(
-            //name: "SwiftWheel", // <- Not sure why this is needed, help? UPDATE: not needed anymore?
-            path: "../SwiftWheel/"
+            name: "SwiftWheel",
+            path: "../"
         ),
+		/*
+        .package(
+            name: "SwiftWheel", // <- Not sure why this is needed, help? UPDATE: not needed anymore?
+            url: "https://github.com/superarts/swift-source-analyzer/SwiftWheel", 
+			.revision("486e1c9256d65cd8078985bab9b1af12430e4b9c")
+        ),
+		*/
     ],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.

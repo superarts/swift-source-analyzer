@@ -29,12 +29,12 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "SwiftWheel",
-            path: "Sources"
+            path: "SwiftWheel/Sources"
         ),
         .testTarget(
             name: "SwiftWheelTests",
             dependencies: ["SwiftWheel", "Quick", "Nimble"],
-            path: "Tests"
+            path: "SwiftWheel/Tests"
         ),
     ]
 )
