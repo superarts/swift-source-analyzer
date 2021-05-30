@@ -32,30 +32,21 @@ public struct FuncType {
     let returnType: ClassType
 }
 
-// accessLevel type name { func1, func2, ... }
-public struct ClassType {
-    enum Category: String {
-        case `struct`, `class`, `enum`
-    }
-
-    let accessLevel: AccessLevel
-    let type: Category
-    let name: String
-    let initializers: [InitializerType]
-    let funcs: [FuncType]
-    let classFuncs: [FuncType] // class, static
-    // TODO: computedProperties
-}
-
 public struct SourceScanner {
     //let filename: String
     //public let classes: [ClassType]
     
     public func scan(filename: String) throws -> [ClassType] {
         print("Scanning:", filename)
-        let content = try String(contentsOf: URL(string: filename)!, encoding: .utf8)
+        var content = try String(contentsOf: URL(string: filename)!, encoding: .utf8)
         let classes = [ClassType]()
-        print(content.count, classes)
+        print("---- read file...")
+        print(content)
+		for type in CommentType.allCases {
+			content = try type.stripped(from: content)
+		}
+        print("---- removed comments...")
+        print(content)
         print("Scanner end ---")
         return classes
     }
