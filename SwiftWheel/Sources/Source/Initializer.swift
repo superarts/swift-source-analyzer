@@ -3,6 +3,8 @@ public struct InitializerType {
 	let rawValue: String
     let accessLevel: AccessLevel
     let parameters: [ParameterType]
+    let isOptional: Bool
+    let doesThrow: Bool
 
 	// TODO: implement these when needed
 	/*
@@ -10,7 +12,6 @@ public struct InitializerType {
         case required, convenience
     }
     let modifiers: [Modifier]
-    let doesThrow: Bool
     let isOverridden: Bool
 	*/
 
@@ -26,7 +27,16 @@ public struct InitializerType {
 			accessLevel = .internal
 		}
 		
-		self.parameters = try ParameterType.matched(from: string)
+		let captured = stringUtility.captured(string, pattern: #"(\w*)\s*init(\?)?\((.*)\)\s*(throws)?"#, options: [.dotMatchesLineSeparators])
+
+		//print("\(string)\n\(captured)")
+		guard captured.count == 4 else {
+			throw SourceError.generic(message: "Initializer should capture 4 elements: \(captured), '\(string)'")
+		}
+		// let modifiers = captured[0]
+		isOptional = (captured[1] == "?")
+		self.parameters = try ParameterType.matched(from: captured[2])
+		doesThrow = (captured[3] == "throws")
 	}
 
 	static func matched(from string: String) throws -> [InitializerType] {
@@ -38,40 +48,7 @@ public struct InitializerType {
 			content = try type.stripped(from: content)
 		}
 
-		// This parser is not very strict; certain coding style is required
-		let lines = content.split(whereSeparator: \.isNewline)
-		var index = 0
-		var currentInitializer = ""
-		var currentCurlyCount = 0
-		var isFound = false
-		var isFirstCurlyFound = false
-		var initializers = [InitializerType]()
-
-		while index < lines.count {
-			let line = lines[index]
-			//print(line)
-			if !isFound, stringUtility.matches(String(line), pattern: #"\s+init\("#) {
-				currentInitializer = ""
-				isFound = true
-				isFirstCurlyFound = false
-				currentCurlyCount = 0
-			}
-			if isFound {
-				currentInitializer += line + "\n"
-				let openCount = line.components(separatedBy: "(").count - 1
-				let closeCount = line.components(separatedBy: ")").count - 1
-				if openCount > 0 {
-					isFirstCurlyFound = true
-				}
-				currentCurlyCount += openCount - closeCount
-				if isFirstCurlyFound, currentCurlyCount == 0 {
-					initializers.append(try InitializerType(string: currentInitializer))
-					isFound = false
-				}
-			}
-			index += 1
-		}
-		return initializers
+		return try stringUtility.findLines(content, pattern: #"\s+init\??\("#, head: "(", tail: ")").map { try InitializerType(string: $0) }
 	}
 }
 

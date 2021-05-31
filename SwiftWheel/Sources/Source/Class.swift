@@ -47,6 +47,7 @@ public struct ClassType: StringUtilityRequired {
 
 		self.rawValue = string
 
+		// Access level
 		if let line = string.split(whereSeparator: \.isNewline).first,
 			let first = stringUtility.firstOccurance(String(line), candidates: AccessLevel.allCases.map { $0.rawValue }), 
 			let accessLevel = AccessLevel(rawValue: first) {
@@ -66,22 +67,29 @@ public struct ClassType: StringUtilityRequired {
 			throw SourceError.generic(message: "Unknown category in component: '\(string)'")
 		}
 
-		if let name = stringUtility.captured(string, pattern: "\(category)\\s(\\w+)").first {
+		// Remove all nested struct/enum/class
+		//print("before \(string)")
+		let content = stringUtility.excludeLines(string, pattern: "struct|class|enum", isFirstLineIgnored: true)
+		//print("after \(content)")
+
+		if let name = stringUtility.captured(content, pattern: "\(category)\\s(\\w+)").first {
 			self.name = name
 		} else {
 			throw SourceError.generic(message: "Unknown name in component: '\(string)'")
 		}
 
-		self.initializers = try InitializerType.matched(from: string)
+		self.initializers = try InitializerType.matched(from: content)
+
 		// TODO
+		classes = [ClassType]()
 		funcs = [FuncType]()
 		classFuncs = [FuncType]()
-		classes = [ClassType]()
 	}
 
 	static func matched(from string: String) throws -> [ClassType] {
-		var content = string
+		let stringUtility = StringUtility()
 
+		var content = string
 		//print("before: \(content)")
 		// Remove comments
 		for type in CommentType.allCases {
@@ -89,40 +97,7 @@ public struct ClassType: StringUtilityRequired {
 		}
 		//print("after: \(content)")
 
-		// This parser is not very strict; certain coding style is required
-		let lines = content.split(whereSeparator: \.isNewline)
-		var index = 0
-		var currentClass = ""
-		var currentCurlyCount = 0
-		var isFound = false
-		var isFirstCurlyFound = false
-		var classes = [ClassType]()
-
-		while index < lines.count {
-			let line = lines[index]
-			//print(line)
-			if !isFound, line.contains("struct") || line.contains("class") || line.contains("enum") || line.contains("extension") {
-				currentClass = ""
-				isFound = true
-				isFirstCurlyFound = false
-				currentCurlyCount = 0
-			}
-			if isFound {
-				currentClass += line + "\n"
-				let openCount = line.components(separatedBy: "{").count - 1
-				let closeCount = line.components(separatedBy: "}").count - 1
-				if openCount > 0 {
-					isFirstCurlyFound = true
-				}
-				currentCurlyCount += openCount - closeCount
-				if isFirstCurlyFound, currentCurlyCount == 0 {
-					classes.append(try ClassType(string: currentClass))
-					isFound = false
-				}
-			}
-			index += 1
-		}
-		return classes
+		return try stringUtility.findLines(content, pattern: "struct|class|enum|extension").map { try ClassType(string: $0) }
 	}
 }
 

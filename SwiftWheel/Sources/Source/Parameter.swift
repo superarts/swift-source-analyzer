@@ -14,9 +14,11 @@ public struct ParameterType {
 
 		self.rawValue = string
 
-		let captured = stringUtility.captured(string, pattern: #"(\w+)\s*(\w*)\s*\:\s*(inout)?\s*(\[\]\w+)?(\?)?\s*=?\s*(.*)"#)
+		///  0___ 1_____  2____ 3_______4   5______
+		/// `from string: inout [String]? = ["default"]`
+		let captured = stringUtility.captured(string, pattern: #"(\w+)\s*(\w*)\s*\:\s*(inout)?\s*([\w\[\]\:\s]*)(\?)?\s*=?\s*(.*)"#)
 		//let array = stringUtility.captured(string, pattern: #"(\w+)\s*(\w*)\s*\:\s*(?:inout)?\s*(\w+)(\?)?"#)
-		//print("||||\(string)\n\(array)\n||||")
+		//print("||||\(string)\n\(captured)\n||||")
 		guard captured.count == 6 else {
 			throw SourceError.generic(message: "Parameter should capture 6 elements: \(captured), '\(string)'")
 		}
@@ -29,7 +31,7 @@ public struct ParameterType {
 	}
 
 	static func matched(from string: String) throws -> [ParameterType] {
-		let stringUtility = StringUtility()
+		//let stringUtility = StringUtility()
 
 		var content = string
 		// Remove comments
@@ -37,15 +39,18 @@ public struct ParameterType {
 			content = try type.stripped(from: content)
 		}
 
+		/*
+		// Regex: anything inside ()
 		guard let parameters = stringUtility.captured(content, pattern: #"[\w\s]+\((.*)\)"#, options: [.dotMatchesLineSeparators]).first else {
 			throw SourceError.generic(message: "Invalid parameters in component: '\(string)'")
 		}
+		*/
 
-		guard !parameters.isEmpty else {
+		guard !content.isEmpty else {
 			return [ParameterType]()
 		}
 
-		return try parameters.components(separatedBy: ",").map { try ParameterType(string: $0) }
+		return try content.components(separatedBy: ",").map { try ParameterType(string: $0) }
 	}
 }
 

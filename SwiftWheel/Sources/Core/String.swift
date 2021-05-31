@@ -102,6 +102,74 @@ public enum StringUtility {
     }
 	*/
 
+	/// Parse line by line; firstly try to find a line that matches `pattern`,
+	/// then look for closed pairs of `head` and `tail`.
+	/// This parser is line based so it's not very strict.
+	public func findLines(_ content: String, pattern: String, head: String = "{", tail: String = "}") -> [String] {
+		let tuple = processLines(content, pattern: pattern, head: head, tail: tail)
+		return tuple.found
+	}
+
+	/// The opposite of `findLines`
+	public func excludeLines(
+		_ content: String,
+		pattern: String,
+		head: String = "{",
+		tail: String = "}",
+		isFirstLineIgnored: Bool = false
+	) -> String {
+		let tuple = processLines(content, pattern: pattern, head: head, tail: tail, isFirstLineIgnored: isFirstLineIgnored)
+		return tuple.excluded
+	}
+
+	/// Returns: (found, excluded)
+	private func processLines(
+		_ content: String,
+		pattern: String,
+		head: String = "{",
+		tail: String = "}",
+		isFirstLineIgnored: Bool = false
+	) -> (found: [String], excluded: String) {
+		let lines = content.split(whereSeparator: \.isNewline)
+		var index = isFirstLineIgnored ? 1 : 0
+		var currentResult = ""
+		var currentPairCount = 0
+		var isFound = false
+		var isFirstFound = false
+		var results = [String]()
+		var excluded = isFirstLineIgnored ? String(lines[0]) + "\n" : ""
+
+		while index < lines.count {
+			let line = lines[index]
+			//print(line)
+			if !isFound, matches(String(line), pattern: pattern) {
+				currentResult = ""
+				isFound = true
+				isFirstFound = false
+				currentPairCount = 0
+			}
+			if isFound {
+				currentResult += line + "\n"
+				let headCount = line.components(separatedBy: head).count - 1
+				let tailCount = line.components(separatedBy: tail).count - 1
+				if headCount > 0 {
+					isFirstFound = true
+				}
+				currentPairCount += headCount - tailCount
+				if isFirstFound, currentPairCount == 0 {
+					results.append(currentResult)
+					isFound = false
+				}
+			} else {
+				excluded += line + "\n"
+			}
+			//print("founded \(currentResult)")
+			//print("exclude \(excluded)")
+			index += 1
+		}
+		return (found: results, excluded: excluded)
+	}
+
     case stateless
     public init() { self = .stateless }
 }

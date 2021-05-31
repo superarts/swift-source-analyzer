@@ -1,8 +1,12 @@
+import SwiftWheel
+
 /**
  * Block comment 1
  */
-private struct Struct1 {
+public struct Struct1 {
 	struct Struct1_1 {
+		init(struct11Only: Bool) { 
+		}
 	}
 
 	init(int: inout Int) { }
@@ -33,12 +37,24 @@ public enum Enum1 {
 	case case1, case2, case3
 }
 
-public struct EnumConfusingNamingStruct { 
+public class EnumConfusingNamingStruct { 
 	init(
 		string1: String,
 		string2: String? = nil
 	) {
 		print(string1)
 		print(string2 ?? "")
+	}
+
+	init?() { }
+
+	convenience init(int: Int) throws {
+		throw SourceError.generic(message: "test only")
+	}
+}
+
+struct Struct2 {
+	init?() throws {
+		throw SourceError.generic(message: "test only")
 	}
 }
