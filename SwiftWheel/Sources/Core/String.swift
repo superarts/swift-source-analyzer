@@ -21,12 +21,12 @@ public enum StringUtility {
     }
 
 	/// Captured strings
-    public func captured(_ str: String, pattern: String) -> [String] {
+    public func captured(_ str: String, pattern: String, options: NSRegularExpression.Options = []) -> [String] {
         var results = [String]()
 
         var regex: NSRegularExpression
         do {
-            regex = try NSRegularExpression(pattern: pattern, options: [])
+            regex = try NSRegularExpression(pattern: pattern, options: options)
         } catch {
             return results
         }
@@ -38,9 +38,13 @@ public enum StringUtility {
         guard lastRangeIndex >= 1 else { return results }
 
         for i in 1...lastRangeIndex {
-            let capturedGroupIndex = match.range(at: i)
-            let matchedString = (str as NSString).substring(with: capturedGroupIndex)
-            results.append(matchedString)
+            let range = match.range(at: i)
+			if range.lowerBound == NSNotFound {
+				results.append("")
+			} else {
+				let matchedString = (str as NSString).substring(with: range)
+				results.append(matchedString)
+			}
         }
 
         return results

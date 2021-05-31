@@ -1,7 +1,25 @@
 import Foundation
 
+enum SourceError: Error {
+	case generic(message: String)
+}
+
 enum AccessLevel: String, CaseIterable {
     case `private`, `fileprivate`, `internal`, `public`, `open`
+}
+
+enum KnownClasses: String, CaseIterable {
+	case int = "Int"
+	case bool = "Bool"
+	case string = "String"
+
+	var defaultValue: String {
+		switch self {
+		case .int: return "0"
+		case .bool: return "true"
+		case .string: return "\"\""
+		}
+	}
 }
 
 // accessLevel func name(parameter1, parameter2, ...): returnType
@@ -18,8 +36,11 @@ public struct SourceScanner {
     //public let classes: [ClassType]
     
     public func scan(filename: String) throws -> [ClassType] {
-        print("Scanning:", filename)
-        let content = try String(contentsOf: URL(string: filename)!, encoding: .utf8)
+        //print("Scanning:", filename)
+		guard let url = URL(string: filename) else {
+			throw SourceError.generic(message: "File not found: \(filename)")
+		}
+        let content = try String(contentsOf: url, encoding: .utf8)
 		/*
         print("---- read file...")
         print(content)
@@ -29,12 +50,21 @@ public struct SourceScanner {
         print("---- removed comments...")
         print(content)
 		*/
-        print("---- finding classes...")
+        //print("---- finding classes...")
 		let classes = try ClassType.matched(from: content)
-		classes.forEach { c in
-			print(c)
+		for aClass in classes {
+			//print(aClass)
+			if aClass.accessLevel == .fileprivate || aClass.accessLevel == .private {
+				continue
+			}
+			for initializer in aClass.initializers {
+				if initializer.parameters.isEmpty, initializer.accessLevel != .fileprivate, initializer.accessLevel != .private {
+					print(aClass.name)
+					break
+				}
+			}
 		}
-        print("Scanner end ---")
+        //print("Scanner end ---")
         return classes
     }
 

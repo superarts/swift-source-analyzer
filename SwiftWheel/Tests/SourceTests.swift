@@ -10,12 +10,17 @@ class SourceSpec: QuickSpec {
 					let scanner = SourceScanner()
 					expect(scanner).toNot(beNil())
 					do {
-						let result = try scanner.scan(filename: "file:///Users/leo/prj/mac/swift-source-analyzer/SwiftWheel/Tests/Example.swift")
-						print("DEBUG scan result: \(result.count)")
+						//let result = try scanner.scan(filename: "file:///Users/leo/prj/mac/swift-source-analyzer/SwiftWheel/Tests/Example.swift")
+						try self.filenames.forEach { filename in
+							let result = try scanner.scan(filename: "file:///\(filename)")
+							//print("DEBUG scan result: \(result.count)")
+						}
 					} catch let error {
 						print("DEBUG scan failed: \(error)")
 					}
+					/*
 					print(CommentType.block.patterns)
+					*/
 				}
 			}
 		}
@@ -38,12 +43,16 @@ class SourceSpec: QuickSpec {
 					expect(comment2).to(contain(matched[2]))
 				}
                 it("should strip multiple comments") {
-					let source = "\(comment0) test0\ntest1\n\(comment1)\ntest2\n\(comment2)\ntest3"
+					let source = "\(comment0)\n\(comment0)\n\(comment0) test4\ntest5\n\(comment1)\ntest6\n\(comment2)\ntest7"
 					let stripped = try CommentType.line.stripped(from: source)
 					//print(source + "\n----\n" + stripped)
 					expect(stripped).toNot(contain(comment0))
 					expect(stripped).toNot(contain(comment1))
 					expect(stripped).toNot(contain(comment2))
+					expect(stripped).toNot(contain("test1"))
+					expect(stripped).toNot(contain("test2"))
+					expect(stripped).toNot(contain("test3"))
+					expect(stripped).toNot(contain("test4"))
 				}
 			}
             describe("Block comments") {

@@ -11,9 +11,10 @@ public struct InitializerType {
     }
     let modifiers: [Modifier]
     let doesThrow: Bool
+    let isOverridden: Bool
 	*/
 
-	init(string: String) {
+	init(string: String) throws {
 		let stringUtility = StringUtility()
 
 		self.rawValue = string
@@ -25,12 +26,13 @@ public struct InitializerType {
 			accessLevel = .internal
 		}
 		
-		parameters = [ParameterType]()
+		self.parameters = try ParameterType.matched(from: string)
 	}
 
 	static func matched(from string: String) throws -> [InitializerType] {
-		var content = string
+		let stringUtility = StringUtility()
 
+		var content = string
 		// Remove comments
 		for type in CommentType.allCases {
 			content = try type.stripped(from: content)
@@ -48,7 +50,7 @@ public struct InitializerType {
 		while index < lines.count {
 			let line = lines[index]
 			//print(line)
-			if !isFound, line.contains("init(") {
+			if !isFound, stringUtility.matches(String(line), pattern: #"\s+init\("#) {
 				currentInitializer = ""
 				isFound = true
 				isFirstCurlyFound = false
@@ -56,14 +58,14 @@ public struct InitializerType {
 			}
 			if isFound {
 				currentInitializer += line + "\n"
-				let openCount = line.components(separatedBy: "{").count - 1
-				let closeCount = line.components(separatedBy: "}").count - 1
+				let openCount = line.components(separatedBy: "(").count - 1
+				let closeCount = line.components(separatedBy: ")").count - 1
 				if openCount > 0 {
 					isFirstCurlyFound = true
 				}
 				currentCurlyCount += openCount - closeCount
 				if isFirstCurlyFound, currentCurlyCount == 0 {
-					initializers.append(InitializerType(string: currentInitializer))
+					initializers.append(try InitializerType(string: currentInitializer))
 					isFound = false
 				}
 			}
@@ -76,7 +78,7 @@ public struct InitializerType {
 extension InitializerType: CustomStringConvertible {
 	public var description: String {
 		"""
-		  ---- Initializer
+		  ---- Initializer with parameter count: \(parameters.count)
 		  AccessLevel: \(accessLevel)
 		  Parameters: \(parameters)
 		  Contents:

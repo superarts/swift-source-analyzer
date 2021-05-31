@@ -29,7 +29,7 @@ extension ClassType: PatternMatchable {
 // accessLevel category name { func1, func2, ... }
 public struct ClassType: StringUtilityRequired {
     enum Category: String, CaseIterable {
-        case `struct`, `class`, `enum`
+        case `struct`, `class`, `enum`, `extension`
     }
 
 	let rawValue: String
@@ -39,14 +39,13 @@ public struct ClassType: StringUtilityRequired {
     let initializers: [InitializerType]
     let funcs: [FuncType]
     let classFuncs: [FuncType] // class, static
+    let classes: [ClassType] // nested class/struct/enum
     // TODO: computedProperties	
 
 	init(string: String) throws {
 		let stringUtility = StringUtility()
 
 		self.rawValue = string
-		funcs = [FuncType]()
-		classFuncs = [FuncType]()
 
 		if let line = string.split(whereSeparator: \.isNewline).first,
 			let first = stringUtility.firstOccurance(String(line), candidates: AccessLevel.allCases.map { $0.rawValue }), 
@@ -64,25 +63,31 @@ public struct ClassType: StringUtilityRequired {
 			category = aCategory
 			self.category = category
 		} else {
-			fatalError("Unknown category in component: '\(string)'")
+			throw SourceError.generic(message: "Unknown category in component: '\(string)'")
 		}
 
 		if let name = stringUtility.captured(string, pattern: "\(category)\\s(\\w+)").first {
 			self.name = name
 		} else {
-			fatalError("Unknown name in component: '\(string)'")
+			throw SourceError.generic(message: "Unknown name in component: '\(string)'")
 		}
 
 		self.initializers = try InitializerType.matched(from: string)
+		// TODO
+		funcs = [FuncType]()
+		classFuncs = [FuncType]()
+		classes = [ClassType]()
 	}
 
 	static func matched(from string: String) throws -> [ClassType] {
 		var content = string
 
+		//print("before: \(content)")
 		// Remove comments
 		for type in CommentType.allCases {
 			content = try type.stripped(from: content)
 		}
+		//print("after: \(content)")
 
 		// This parser is not very strict; certain coding style is required
 		let lines = content.split(whereSeparator: \.isNewline)
@@ -96,7 +101,7 @@ public struct ClassType: StringUtilityRequired {
 		while index < lines.count {
 			let line = lines[index]
 			//print(line)
-			if !isFound, line.contains("struct") || line.contains("class") || line.contains("enum") {
+			if !isFound, line.contains("struct") || line.contains("class") || line.contains("enum") || line.contains("extension") {
 				currentClass = ""
 				isFound = true
 				isFirstCurlyFound = false
