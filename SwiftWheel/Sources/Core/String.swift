@@ -20,6 +20,7 @@ public enum StringUtility {
         return str.range(of: pattern, options: .regularExpression) != nil 
     }
 
+	/// Captured strings
     public func captured(_ str: String, pattern: String) -> [String] {
         var results = [String]()
 
@@ -64,6 +65,38 @@ public enum StringUtility {
             }
         }
     }
+
+	/// Return the first occurance of the candidates
+	public func firstOccurance(_ string: String, candidates: [String]) -> String? {
+		guard !candidates.isEmpty else {
+			return nil
+		}
+		// `string` should contain at least one of the `candidates`
+		guard candidates.contains(where: string.contains) else {
+			return nil
+		}
+		return candidates.sorted { (index(string, substring: $0) ?? Int.max) < (index(string, substring: $1) ?? Int.max) }.first
+	}
+
+	/// Return index of a substring in a source string
+    public func index(_ string: String, substring: String, options: String.CompareOptions = []) -> Int? {
+		if let index = string.range(of: substring, options: options)?.lowerBound {
+			return index.utf16Offset(in: string)
+		}
+		return nil
+	}
+
+	/*
+    func ranges(_ string: String, options: String.CompareOptions = []) -> [Range<String.Index>] {
+        var result: [Range<String.Index>] = []
+        var startIndex = string.startIndex
+        while startIndex < string.endIndex, let range = string[startIndex...] .range(of: string, options: options) {
+			result.append(range)
+			startIndex = range.lowerBound < range.upperBound ? range.upperBound : string.index(range.lowerBound, offsetBy: 1, limitedBy: string.endIndex) ?? string.endIndex
+        }
+        return result
+    }
+	*/
 
     case stateless
     public init() { self = .stateless }

@@ -39,5 +39,24 @@ class StringUtilitySpec: QuickSpec, StringUtilityRequired {
 				}
 			}
 		}
+        context("searching") {
+            describe("index") {
+				it("should find index") {
+                    expect(self.stringUtility.index("test1 test2", substring: "test2")).to(equal(6))
+				}
+				it("should not find index") {
+                    expect(self.stringUtility.index("test1 test2", substring: "test3")).to(beNil())
+				}
+				it("should find first occurance") {
+					expect(self.stringUtility.firstOccurance("private struct test { }", candidates: ["enum", "struct", "class"])).to(equal("struct"))
+					expect(self.stringUtility.firstOccurance("test1 test2 test3", candidates: ["test2"])).to(equal("test2"))
+					expect(self.stringUtility.firstOccurance("test1 test2 test3", candidates: ["test2", "test1", "test3"])).to(equal("test1"))
+				}
+				it("should find first occurance") {
+					expect(self.stringUtility.firstOccurance("test1 test2 test3", candidates: [])).to(beNil())
+					expect(self.stringUtility.firstOccurance("test1 test2 test3", candidates: ["test4", "test5"])).to(beNil())
+				}
+			}
+		}
 	}
 }

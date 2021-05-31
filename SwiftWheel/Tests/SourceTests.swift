@@ -10,8 +10,8 @@ class SourceSpec: QuickSpec {
 					let scanner = SourceScanner()
 					expect(scanner).toNot(beNil())
 					do {
-						let result = try scanner.scan(filename: "file:///Users/leo/prj/mac/swift-source-analyzer/SwiftWheel/Sources/Source/Model.swift")
-						print("DEBUG scan result: \(result)")
+						let result = try scanner.scan(filename: "file:///Users/leo/prj/mac/swift-source-analyzer/SwiftWheel/Tests/Example.swift")
+						print("DEBUG scan result: \(result.count)")
 					} catch let error {
 						print("DEBUG scan failed: \(error)")
 					}

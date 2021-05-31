@@ -1,26 +1,7 @@
 import Foundation
 
-enum AccessLevel: String {
-    case `private`, `fileprivate`, `internal`, `public`
-}
-
-// ...(name internalName: type)
-public struct ParameterType {
-    let name: String
-    let internalName: String
-    let type: ClassType
-}
-
-// accessLevel modifier init(parameter1, parameter2, ...)
-public struct InitializerType {
-    enum Modifier: String {
-        case required
-        case none = ""
-    }
-    let accessLevel: AccessLevel
-    let modifier: Modifier
-    let parameters: [ParameterType]
-    let doesThrow: Bool
+enum AccessLevel: String, CaseIterable {
+    case `private`, `fileprivate`, `internal`, `public`, `open`
 }
 
 // accessLevel func name(parameter1, parameter2, ...): returnType
@@ -38,8 +19,8 @@ public struct SourceScanner {
     
     public func scan(filename: String) throws -> [ClassType] {
         print("Scanning:", filename)
-        var content = try String(contentsOf: URL(string: filename)!, encoding: .utf8)
-        let classes = [ClassType]()
+        let content = try String(contentsOf: URL(string: filename)!, encoding: .utf8)
+		/*
         print("---- read file...")
         print(content)
 		for type in CommentType.allCases {
@@ -47,6 +28,12 @@ public struct SourceScanner {
 		}
         print("---- removed comments...")
         print(content)
+		*/
+        print("---- finding classes...")
+		let classes = try ClassType.matched(from: content)
+		classes.forEach { c in
+			print(c)
+		}
         print("Scanner end ---")
         return classes
     }
