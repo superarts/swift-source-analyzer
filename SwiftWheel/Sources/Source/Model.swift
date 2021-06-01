@@ -37,6 +37,24 @@ enum KnownClasses: String, CaseIterable {
 		case .stringAnyObjectDictionary: return #"["key": "value"]"#
 		}
 	}
+
+	/// Returns `nil` if it's not a known class
+	static func defaultValue(typeName string: String, isOptional: Bool = false) -> String? {
+		if isOptional {
+			return "nil"
+		}
+
+		if let theClass = KnownClasses(rawValue: string) {
+			return theClass.defaultValue
+		}
+
+		let stringUtility = StringUtility()
+		if stringUtility.matches(string, pattern: "^(NS|UI|CG).*") {
+			return string + "()"
+		}
+
+		return nil
+	}
 }
 
 // accessLevel func name(parameter1, parameter2, ...): returnType
@@ -53,6 +71,7 @@ public struct SourceScanner {
     //public let classes: [ClassType]
     
     public func scan(filename: String) throws -> [ClassType] {
+		var output = ""
         //print("Scanning:", filename)
 		guard let url = URL(string: filename) else {
 			throw SourceError.generic(message: "File not found: \(filename)")
@@ -98,12 +117,20 @@ public struct SourceScanner {
 						//print("\t" + parameter.typeName)
 						//print("\(KnownClasses.allCases.map { $0.rawValue })||||\(parameter.typeName)")
 						//if !KnownClasses.allCases.map { $0.rawValue }.contains(parameter.typeName) { }
-						guard let theClass = KnownClasses(rawValue: parameter.typeName) else {
+						
+						guard let defaultValue = KnownClasses.defaultValue(typeName: parameter.typeName, isOptional: parameter.isOptional) else {
 							isAllKnown = false
 							break
 						}
+
+						// Exclude e.g. `init(coder _: NSCoder)`
+						guard parameter.internalName != "_" else {
+							isAllKnown = false
+							break
+						}
+
 						let name = (parameter.name == "_") ? "" : parameter.name
-						parameters.append("\(name): \(theClass.defaultValue)")
+						parameters.append("\(name): \(defaultValue)")
 					}
 					if isAllKnown {
 						code = "\(aClass.name)(\(parameters.joined(separator: ", ")))"
@@ -115,24 +142,32 @@ public struct SourceScanner {
 					continue
 				}
 
+				// TODO: support the following cases
 				if initializer.doesThrow {
 					code = "try \(code)"
+					continue
 				}
-
 				if initializer.isOptional {
-					// TODO: need to deal with this later
 					comment = "/// Ensure '\(code)' doesn't throw"
 					//print(comment)
 					//print("expect { \(code) }.to(throwAssertion())")
-				} else {
-					comment = "/// Ensure '\(code)' isn't nil"
-					print(comment)
-					print("expect(\(code)).toNot(beNil())")
+					continue
 				}
-				print("")
+				// TODO: disable deprecated and unavailable items
+
+				comment = "Ensures '\(code)' isn't nil"
+				let test = """
+				/// \(comment)
+				it(\"should initialize \(aClass.name)\") {
+				    expect(\(code)).toNot(beNil())
+				}
+				"""
+				//print(test + "\n")
+				output += test + "\n\n"
 			}
 		}
         //print("Scanner end ---")
+		print(output)
         return classes
     }
 
