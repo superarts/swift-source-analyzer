@@ -10,14 +10,7 @@ class SourceSpec: QuickSpec {
 					let scanner = SourceScanner()
 					expect(scanner).toNot(beNil())
 					do {
-						if true {
-							let _ = try scanner.scan(filename: "file:///Users/leo/prj/mac/swift-source-analyzer/SwiftWheel/Tests/Example.swift")
-						} else {
-							try self.filenames.forEach { filename in
-								let _ = try scanner.scan(filename: "file:///\(filename)")
-								//print("DEBUG scan result: \(result.count)")
-							}
-						}
+						let _ = try scanner.scan(filename: "file:///Users/leo/prj/mac/swift-source-analyzer/SwiftWheel/Tests/Example.swift")
 					} catch let error {
 						print("DEBUG scan failed: \(error)")
 					}

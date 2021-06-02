@@ -1,15 +1,15 @@
 // ...(name internalName: type)
 public struct ParameterType {
-	let rawValue: String
-    let name: String
-    let internalName: String
-    let typeName: String
-	let isInout: Bool
-	let isOptional: Bool
-	let defaultValue: String
-    //let type: ClassType
+	public let rawValue: String
+    public let name: String
+    public let internalName: String
+    public let typeName: String
+	public let isInout: Bool
+	public let isOptional: Bool
+	public let defaultValue: String
+    //public let type: ClassType
 
-	init(string: String) throws {
+	public init(string: String) throws {
 		let stringUtility = StringUtility()
 
 		self.rawValue = string
@@ -30,7 +30,7 @@ public struct ParameterType {
 		defaultValue = captured[5]
 	}
 
-	static func matched(from string: String) throws -> [ParameterType] {
+	public static func matched(from string: String) throws -> [ParameterType] {
 		//let stringUtility = StringUtility()
 
 		var content = string

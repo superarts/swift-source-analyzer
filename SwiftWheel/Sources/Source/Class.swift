@@ -28,21 +28,21 @@ extension ClassType: PatternMatchable {
 
 // accessLevel category name { func1, func2, ... }
 public struct ClassType: StringUtilityRequired {
-    enum Category: String, CaseIterable {
+    public enum Category: String, CaseIterable {
         case `struct`, `class`, `enum`, `extension`
     }
 
-	let rawValue: String
-    let accessLevel: AccessLevel
-    let category: Category
-    let name: String
-    let initializers: [InitializerType]
-    let funcs: [FuncType]
-    let classFuncs: [FuncType] // class, static
-    let classes: [ClassType] // nested class/struct/enum
+	public let rawValue: String
+    public let accessLevel: AccessLevel
+    public let category: Category
+    public let name: String
+    public let initializers: [InitializerType]
+    public let funcs: [FuncType]
+    public let classFuncs: [FuncType] // class, static
+    public let classes: [ClassType] // nested class/struct/enum
     // TODO: computedProperties	
 
-	init(string: String) throws {
+	public init(string: String) throws {
 		let stringUtility = StringUtility()
 
 		self.rawValue = string
@@ -86,7 +86,7 @@ public struct ClassType: StringUtilityRequired {
 		classFuncs = [FuncType]()
 	}
 
-	static func matched(from string: String) throws -> [ClassType] {
+	public static func matched(from string: String) throws -> [ClassType] {
 		let stringUtility = StringUtility()
 
 		var content = string

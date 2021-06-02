@@ -1,10 +1,10 @@
 // accessLevel modifier init(parameter1, parameter2, ...)
 public struct InitializerType {
-	let rawValue: String
-    let accessLevel: AccessLevel
-    let parameters: [ParameterType]
-    let isOptional: Bool
-    let doesThrow: Bool
+	public let rawValue: String
+    public let accessLevel: AccessLevel
+    public let parameters: [ParameterType]
+    public let isOptional: Bool
+    public let doesThrow: Bool
 
 	// TODO: implement these when needed
 	/*
@@ -15,7 +15,7 @@ public struct InitializerType {
     let isOverridden: Bool
 	*/
 
-	init(string: String) throws {
+	public init(string: String) throws {
 		let stringUtility = StringUtility()
 
 		self.rawValue = string
@@ -39,7 +39,7 @@ public struct InitializerType {
 		doesThrow = (captured[3] == "throws")
 	}
 
-	static func matched(from string: String) throws -> [InitializerType] {
+	public static func matched(from string: String) throws -> [InitializerType] {
 		let stringUtility = StringUtility()
 
 		var content = string

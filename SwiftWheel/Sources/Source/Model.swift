@@ -4,11 +4,11 @@ public enum SourceError: Error {
 	case generic(message: String)
 }
 
-enum AccessLevel: String, CaseIterable {
+public enum AccessLevel: String, CaseIterable {
     case `private`, `fileprivate`, `internal`, `public`, `open`
 }
 
-enum KnownClasses: String, CaseIterable {
+public enum KnownClasses: String, CaseIterable {
 	case int = "Int"
 	case bool = "Bool"
 	case string = "String"
@@ -22,7 +22,7 @@ enum KnownClasses: String, CaseIterable {
 	case stringArray = "[String]"
 	case stringAnyObjectDictionary = "[String: AnyObject]"
 
-	var defaultValue: String {
+	public var defaultValue: String {
 		switch self {
 		case .int: return "0"
 		case .bool: return "true"
@@ -39,7 +39,7 @@ enum KnownClasses: String, CaseIterable {
 	}
 
 	/// Returns `nil` if it's not a known class
-	static func defaultValue(typeName string: String, isOptional: Bool = false) -> String? {
+	public static func defaultValue(typeName string: String, isOptional: Bool = false) -> String? {
 		if isOptional {
 			return "nil"
 		}
@@ -59,11 +59,11 @@ enum KnownClasses: String, CaseIterable {
 
 // accessLevel func name(parameter1, parameter2, ...): returnType
 public struct FuncType {
-    let accessLevel: AccessLevel
-    let name: String
-    let parameters: [ParameterType]
-    let doesThrow: Bool
-    let returnType: ClassType
+    public let accessLevel: AccessLevel
+    public let name: String
+    public let parameters: [ParameterType]
+    public let doesThrow: Bool
+    public let returnType: ClassType
 }
 
 public struct SourceScanner {
