@@ -27,7 +27,7 @@ public struct InitializerType {
 			accessLevel = .internal
 		}
 		
-		let captured = stringUtility.captured(string, pattern: #"(\w*)\s*init(\?)?\((.*)\)\s*(throws)?"#, options: [.dotMatchesLineSeparators])
+		let captured = stringUtility.captured(string, pattern: #"(\w*)\s+init(\?)?\((.*)\)\s*(throws)?"#, options: [.dotMatchesLineSeparators])
 
 		//print("\(string)\n\(captured)")
 		guard captured.count == 4 else {

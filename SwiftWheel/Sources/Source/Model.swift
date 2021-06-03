@@ -50,7 +50,7 @@ public enum KnownClasses: String, CaseIterable {
 
 		let stringUtility = StringUtility()
 		if stringUtility.matches(string, pattern: "^(NS|UI|CG).*") {
-			return string + "()"
+			return string.trimmingCharacters(in: .whitespacesAndNewlines) + "()"
 		}
 
 		return nil
