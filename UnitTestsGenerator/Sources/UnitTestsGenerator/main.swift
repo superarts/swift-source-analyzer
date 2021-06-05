@@ -27,6 +27,9 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
     @Option(name: .long, help: "Ignored files. Divided by comma, e.g. IgnoredClass1.swift,IgnoredClass2.swift")
 	var ignoreFilenames: String?
 
+    @Option(name: .long, help: "Ignored function namesi. Divided by comma, e.g. func1,func2")
+	var ignoreFuncnames: String?
+
     @Option(name: .long, help: "Input path with Swift files.")
 	var inputPath: String?
 
@@ -39,6 +42,8 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 	private var ignoredClasses: [String] { ignoreClasses?.components(separatedBy: ",") ?? [String]() }
 
 	private var ignoredFilenames: [String] { ignoreFilenames?.components(separatedBy: ",") ?? [String]() }
+
+	private var ignoredFuncnames: [String] { ignoreFuncnames?.components(separatedBy: ",") ?? [String]() }
 
     private struct Const {
 		struct Color {
@@ -56,7 +61,7 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 		if let inputPath = inputPath {
 			let filenameList = try execute("find '\(inputPath)' -name '*.swift'", message: "Finding swift files")
 			filenames = filenameList.split(whereSeparator: \.isNewline).map { String($0) }
-			log("Found \(filenames.count) files")
+			log("Found \(filenames.count) file(s)")
 		} else if let inputFilename = inputFilename {
 			filenames = [inputFilename]
 		} else {
@@ -113,6 +118,7 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 
 		import Nimble
 		import Quick
+		import CoreData
 		@testable import LillyTogetherDev
 
 		class AutomatedTests: QuickSpec {
@@ -131,7 +137,13 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 
     private func process(filename: String) throws -> String {
         let url = URL(fileURLWithPath: filename)
-		var output = "\(spaces(8))/// Generated from \(filename)\n"
+		let shortFilename: String
+		if let inputPath = inputPath {
+			shortFilename = filename.replacingOccurrences(of: inputPath, with: "")
+		} else {
+			shortFilename = filename
+		}
+		var output = "\(spaces(8))/// Generated from $PATH\(shortFilename)\n"
 
         let content = try String(contentsOf: url, encoding: .utf8)
 		let classes = try ClassType.matched(from: content)
@@ -165,7 +177,40 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 			output += process(initializer: initializer, in: aClass)
 		}
 
+		if aClass.initializers.isEmpty,
+			let baseClass = aClass.baseClassName,
+			let superInitializer = KnownClasses.defaultValue(typeName: baseClass)
+		{
+			let variableName = aClass.name.prefix(1).lowercased() + aClass.name.dropFirst()
+			let initializerCode = "\(aClass.name)()"
+			let funcsCode = allFuncsCode(class: aClass, variableName: variableName)
+			output += """
+				\(spaces(12))/// Ensures '\(initializerCode)' isn't nil
+				\(spaces(12))it(\"should initialize \(aClass.name) from super class initializer \(superInitializer)\") {
+				\(spaces(16))let \(variableName) = \(initializerCode)
+				\(funcsCode)
+				\(spaces(16))expect(\(variableName)).toNot(beNil())
+				\(spaces(12))}
+
+				"""
+		}
+
 		return output
+	}
+
+	/// Returns: lines of "variableName.functionName(paramList: ...)"
+	private func allFuncsCode(class aClass: ClassType, variableName: String) -> String {
+		if let str = aClass.baseClassName, stringUtility.matches(str, pattern: "^UI.*") {
+			return "\(spaces(16))/// UIKit functions are not supported for now."
+		}
+		var funcs = [String]()
+		for function in aClass.funcs {
+			if let f = process(function: function) {
+				funcs.append("\(spaces(16))\(function.returnTypeName != nil ? "let _ = " : "")\(variableName).\(f)")
+			}
+		}
+		return funcs.joined(separator: "\n")
+
 	}
 
 	private func process(initializer: InitializerType, in aClass: ClassType) -> String {
@@ -175,21 +220,7 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 		guard initializer.accessLevel != .fileprivate else {
 			return ""
 		}
-
-		let initializerCode: String
-		if initializer.parameters.isEmpty {
-			initializerCode = "\(aClass.name)()"
-		} else {
-			//print(initializer.parameters)
-			var parameters = [String]()
-			for parameter in initializer.parameters {
-				guard let output = process(parameter: parameter) else {
-					return ""
-				}
-				parameters.append(output)
-			}
-			initializerCode = "\(aClass.name)(\(parameters.joined(separator: ", ")))"
-		}
+		// TODO: disable deprecated and unavailable items
 
 		// TODO: support the following cases
 		if initializer.doesThrow {
@@ -203,19 +234,41 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 			return ""
 		}
 
-		// TODO: disable deprecated and unavailable items
+		guard let param = process(parameters: initializer.parameters) else {
+			return ""
+		}
+		let initializerCode = "\(aClass.name)\(param)"
 
 		let variableName = aClass.name.prefix(1).lowercased() + aClass.name.dropFirst()
+		let funcsCode = allFuncsCode(class: aClass, variableName: variableName)
 		return """
 			\(spaces(12))/// Ensures '\(initializerCode)' isn't nil
 			\(spaces(12))it(\"should initialize \(aClass.name)\") {
 			\(spaces(16))let \(variableName) = \(initializerCode)
+			\(funcsCode)
 			\(spaces(16))expect(\(variableName)).toNot(beNil())
 			\(spaces(12))}
 
 			"""
 	}
 
+	/// Returns: nil when any parameter in `parameters` doesn't have a default value
+	private func process(parameters: [ParameterType]) -> String? {
+		guard !parameters.isEmpty else {
+			return "()"
+		}
+
+		var array = [String]()
+		for parameter in parameters {
+			guard let output = process(parameter: parameter) else {
+				return nil
+			}
+			array.append(output)
+		}
+		return "(\(array.joined(separator: ", ")))"
+	}
+
+	/// Returns: nil when `parameter` doesn't have a default value
 	private func process(parameter: ParameterType) -> String? {
 		//print("\t" + parameter.typeName)
 		//print("\(KnownClasses.allCases.map { $0.rawValue })||||\(parameter.typeName)")
@@ -230,10 +283,25 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 			return nil
 		}
 
-		let name = (parameter.name == "_") ? "" : parameter.name
+		let name = (parameter.name == "_") ? "" : "\(parameter.name): "
 		//print("-1-\(name)---")
 		//print("-2-\(defaultValue)---")
-		return "\(name): \(defaultValue)"
+		return "\(name)\(defaultValue)"
+	}
+
+	private func process(function: FuncType) -> String? {
+		guard !ignoredFuncnames.contains(function.name) else {
+			return nil
+		}
+		guard !function.accessLevel.isPrivate else {
+			return nil
+		}
+		guard let param = process(parameters: function.parameters) else {
+			return nil
+		}
+		//print("\(function.name); \(param)")
+
+		return "\(function.doesThrow ? "try? " : "")\(function.name)\(param)"
 	}
 }
 

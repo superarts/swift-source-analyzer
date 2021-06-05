@@ -4,11 +4,14 @@ all: clean debug
 	./$(NAME) --verbose \
 		--input-path ~/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia/ \
 		--ignore-filenames CustomUIButton.swift \
+		--ignore-funcnames googleAnalyticsTrackingId,tappedCrop,serviceName,urlString,pathForService,openUrlPathForService \
 		--ignore-classes BetterSegmentedControl,AlertActionStruct,TextProperties \
 		--output-filename ~/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudiaTests/AutomatedTests.swift
 
 	# \
 		--input-path ~/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia/ \
+		--input-filename /Users/leo/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia/Classes/SlideMenuController.swift \
+		--input-filename /Users/leo/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia/Sources/View/WelcomeViewController.swift \
 		--input-filename /Users/leo/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia//Sources/ReusableComponent/OnboardingLottieView.swift \
 		--input-filename /Users/leo/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia//Sources/ReusableComponent/CustomUIButton.swift \
 

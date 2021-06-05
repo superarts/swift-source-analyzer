@@ -14,9 +14,9 @@ public struct ParameterType {
 
 		self.rawValue = string
 
-		///  0___ 1_____  2____ 3_______4   5______
-		/// `from string: inout [String]? = ["default"]`
-		let captured = stringUtility.captured(string, pattern: #"(\w+)\s*(\w*)\s*\:\s*(inout)?\s*([\w\[\]\:\s]*)(\?)?\s*=?\s*(.*)"#)
+		///  0___ 1_____  2____ 3_______________4   5______
+		/// `from string: inout [String.Options]? = ["default"]`
+		let captured = stringUtility.captured(string, pattern: #"(\w+)\s*(\w*)\s*\:\s*(inout)?\s*([\w\[\]\:\s\.]*)(\?)?\s*=?\s*(.*)"#)
 		//let array = stringUtility.captured(string, pattern: #"(\w+)\s*(\w*)\s*\:\s*(?:inout)?\s*(\w+)(\?)?"#)
 		//print("||||\(string)\n\(captured)\n||||")
 		guard captured.count == 6 else {

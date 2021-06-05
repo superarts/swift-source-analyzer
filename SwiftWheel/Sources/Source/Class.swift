@@ -40,6 +40,10 @@ public struct ClassType: StringUtilityRequired {
     public let funcs: [FuncType]
     public let classFuncs: [FuncType] // class, static
     public let classes: [ClassType] // nested class/struct/enum
+
+	// Class only
+	public let baseClassName: String?
+
     // TODO: computedProperties	
 
 	public init(string: String) throws {
@@ -78,11 +82,22 @@ public struct ClassType: StringUtilityRequired {
 			throw SourceError.generic(message: "Unknown name in component: '\(string)'")
 		}
 
+		// Find base class
+		let captured = stringUtility.captured(content, pattern: #"class\s+\w+\:?\s?(\w+)?.*\{"#)
+		if category == .class,
+			captured.count == 1 
+		{
+			self.baseClassName = captured[0]
+		} else {
+			self.baseClassName = nil
+		}
+		//print("||||\(content)||||\(captured)||||")
+
 		self.initializers = try InitializerType.matched(from: content)
+		self.funcs = try FuncType.matched(from: content)
 
 		// TODO
 		classes = [ClassType]()
-		funcs = [FuncType]()
 		classFuncs = [FuncType]()
 	}
 

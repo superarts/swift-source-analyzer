@@ -6,66 +6,10 @@ public enum SourceError: Error {
 
 public enum AccessLevel: String, CaseIterable {
     case `private`, `fileprivate`, `internal`, `public`, `open`
+	public var isPrivate: Bool { self == .private || self == .fileprivate }
 }
 
-public enum KnownClasses: String, CaseIterable {
-	case int = "Int"
-	case bool = "Bool"
-	case string = "String"
-	case date = "Date"
-
-	case nsCoder = "NSCoder"
-	case cgRect = "CGRect"
-
-	// TODO: process array and dictionary differently
-	case intArray = "[Int]"
-	case stringArray = "[String]"
-	case stringAnyObjectDictionary = "[String: AnyObject]"
-
-	public var defaultValue: String {
-		switch self {
-		case .int: return "0"
-		case .bool: return "true"
-		case .string: return "\"\""
-		case .date: return "Date()"
-
-		case .nsCoder: return "NSCoder()"
-		case .cgRect: return "CGRect()"
-
-		case .intArray: return "[0]"
-		case .stringArray: return "[\"\"]"
-		case .stringAnyObjectDictionary: return #"["key": "value"]"#
-		}
-	}
-
-	/// Returns `nil` if it's not a known class
-	public static func defaultValue(typeName string: String, isOptional: Bool = false) -> String? {
-		if isOptional {
-			return "nil"
-		}
-
-		if let theClass = KnownClasses(rawValue: string) {
-			return theClass.defaultValue
-		}
-
-		let stringUtility = StringUtility()
-		if stringUtility.matches(string, pattern: "^(NS|UI|CG).*") {
-			return string.trimmingCharacters(in: .whitespacesAndNewlines) + "()"
-		}
-
-		return nil
-	}
-}
-
-// accessLevel func name(parameter1, parameter2, ...): returnType
-public struct FuncType {
-    public let accessLevel: AccessLevel
-    public let name: String
-    public let parameters: [ParameterType]
-    public let doesThrow: Bool
-    public let returnType: ClassType
-}
-
+// TODO: this should be removed as it's not part of the library
 public struct SourceScanner {
     //let filename: String
     //public let classes: [ClassType]
