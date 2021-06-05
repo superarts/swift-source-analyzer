@@ -21,6 +21,9 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
     @Flag(name: .long, help: "Do NOT execute any shell command at all. Not supported by LillyUtilityCLI classes yet. DEBUG ONLY.")
     var dryRun: Bool = false
 
+    @Option(name: .long, help: "Allow functions of these classes to be tested. Divided by comma, e.g. IgnoredClass1,IgnoredClass2")
+	var allowClasses: String?
+
     @Option(name: .long, help: "Ignored classes. Divided by comma, e.g. IgnoredClass1,IgnoredClass2")
 	var ignoreClasses: String?
 
@@ -38,6 +41,8 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 
     @Option(name: .long, help: "Output filename.")
 	var outputFilename: String
+
+	private var allowedClasses: [String] { allowClasses?.components(separatedBy: ",") ?? [String]() }
 
 	private var ignoredClasses: [String] { ignoreClasses?.components(separatedBy: ",") ?? [String]() }
 
@@ -200,7 +205,7 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 
 	/// Returns: lines of "variableName.functionName(paramList: ...)"
 	private func allFuncsCode(class aClass: ClassType, variableName: String) -> String {
-		if let str = aClass.baseClassName, stringUtility.matches(str, pattern: "^UI.*") {
+		if let str = aClass.baseClassName, stringUtility.matches(str, pattern: "^UI.*"), !allowedClasses.contains(aClass.name) {
 			return "\(spaces(16))/// UIKit functions are not supported for now."
 		}
 		var funcs = [String]()

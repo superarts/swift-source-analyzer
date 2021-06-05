@@ -3,9 +3,10 @@ NAME=unit-tests-generator
 all: clean debug
 	./$(NAME) --verbose \
 		--input-path ~/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia/ \
+		--allow-classes SlideMenuController,MySymptomsBaseViewController \
+		--ignore-classes BetterSegmentedControl,AlertActionStruct,TextProperties \
 		--ignore-filenames CustomUIButton.swift \
 		--ignore-funcnames googleAnalyticsTrackingId,tappedCrop,serviceName,urlString,pathForService,openUrlPathForService \
-		--ignore-classes BetterSegmentedControl,AlertActionStruct,TextProperties \
 		--output-filename ~/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudiaTests/AutomatedTests.swift
 
 	# \
