@@ -1,7 +1,22 @@
+/// Function categories
+public enum FuncCategory {
+	case `static`, `class`, instance, global
+
+	/// `!isStatic` could mean `instance` or `global`
+	public var isStatic: Bool {
+		switch self {
+		case .static, .class: return true
+		case .instance, .global: return false
+		}
+	}
+}
+
+/// Type to represent Swift functions
 // accessLevel func name(parameter1, parameter2, ...): returnType
 public struct FuncType {
 	public let rawValue: String
     public let accessLevel: AccessLevel
+    public let category: FuncCategory
     public let name: String
     public let parameters: [ParameterType]
     public let doesThrow: Bool
@@ -20,8 +35,12 @@ public struct FuncType {
 			throw SourceError.generic(message: "Func should capture 6 elements: \(captured), '\(string)'")
 		}
 
-		guard !captured[0].contains("static"), !captured[0].contains("class") else {
-			throw SourceError.generic(message: "Does not suppoort static / class func now: \(captured[0])")
+		if captured[0].contains("static") {
+			category = .static
+		} else if captured[0].contains("class") {
+			category = .class
+		} else {
+			category = .instance
 		}
 
 		// Access level

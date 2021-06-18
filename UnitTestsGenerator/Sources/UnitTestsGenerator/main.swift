@@ -210,8 +210,8 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 		}
 		var funcs = [String]()
 		for function in aClass.funcs {
-			if let f = process(function: function) {
-				funcs.append("\(spaces(16))\(function.returnTypeName != nil ? "let _ = " : "")\(variableName).\(f)")
+			if let f = process(function: function, className: aClass.name, variableName: variableName) {
+				funcs.append("\(spaces(16))\(function.returnTypeName != nil ? "let _ = " : "")\(f)")
 			}
 		}
 		return funcs.joined(separator: "\n")
@@ -294,7 +294,7 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 		return "\(name)\(defaultValue)"
 	}
 
-	private func process(function: FuncType) -> String? {
+	private func process(function: FuncType, className: String, variableName: String) -> String? {
 		guard !ignoredFuncnames.contains(function.name) else {
 			return nil
 		}
@@ -306,7 +306,14 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 		}
 		//print("\(function.name); \(param)")
 
-		return "\(function.doesThrow ? "try? " : "")\(function.name)\(param)"
+		if function.category.isStatic {
+			return "\(function.doesThrow ? "try? " : "")\(className).\(function.name)\(param)"
+		} else if function.category == .instance {
+			return "\(function.doesThrow ? "try? " : "")\(variableName).\(function.name)\(param)"
+		} else {
+			//throws GeneratorError.generic(message: "Unexpected func category found in: \(f)")
+			return nil
+		}
 	}
 }
 
