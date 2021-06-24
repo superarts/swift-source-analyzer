@@ -16,11 +16,12 @@ public struct ParameterType {
 
 		///  0___ 1_____  2____ 3_______________4   5______
 		/// `from string: inout [String.Options]? = ["default"]`
-		let captured = stringUtility.captured(string, pattern: #"(\w+)\s*(\w*)\s*\:\s*(inout)?\s*([\w\[\]\:\s\.]*)(\?)?\s*=?\s*(.*)"#)
+		let pattern = #"(\w+)\s*(\w*)\s*\:\s*(inout)?\s*("# + KnownClasses.Const.typeRegex.rawValue + #")(\?)?\s*=?\s*(.*)"#
+		let captured = stringUtility.captured(string, pattern: pattern)
 		//let array = stringUtility.captured(string, pattern: #"(\w+)\s*(\w*)\s*\:\s*(?:inout)?\s*(\w+)(\?)?"#)
 		//print("||||\(string)\n\(captured)\n||||")
 		guard captured.count == 6 else {
-			throw SourceError.generic(message: "Parameter should capture 6 elements: \(captured), '\(string)'")
+			throw SourceError.generic(message: "Parameter should capture 6 elements by \(pattern): \(captured), '\(string)'")
 		}
 		name = captured[0]
 		internalName = captured[1]

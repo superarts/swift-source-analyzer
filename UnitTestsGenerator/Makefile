@@ -7,7 +7,10 @@ all: clean debug
 		--ignore-classes BetterSegmentedControl,AlertActionStruct,TextProperties \
 		--ignore-filenames CustomUIButton.swift \
 		--ignore-funcnames googleAnalyticsTrackingId,tappedCrop,serviceName,urlString,pathForService,openUrlPathForService \
-		--output-filename ~/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudiaTests/AutomatedTests.swift
+		--output-path ~/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudiaTests/AutomatedTests/ \
+		--output-filename ~/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudiaTests/AutomatedTests.swift \
+		--header-string 'import CoreData' \
+		--header-string '@testable import LillyTogetherDev'
 
 	# \
 		--input-path ~/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia/ \

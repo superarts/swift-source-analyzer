@@ -1,5 +1,5 @@
 /// Function categories
-public enum FuncCategory {
+public enum MemberCategory {
 	case `static`, `class`, instance, global
 
 	/// `!isStatic` could mean `instance` or `global`
@@ -16,7 +16,7 @@ public enum FuncCategory {
 public struct FuncType {
 	public let rawValue: String
     public let accessLevel: AccessLevel
-    public let category: FuncCategory
+    public let category: MemberCategory
     public let name: String
     public let parameters: [ParameterType]
     public let doesThrow: Bool

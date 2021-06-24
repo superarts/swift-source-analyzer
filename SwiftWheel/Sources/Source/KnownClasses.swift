@@ -1,4 +1,9 @@
 public enum KnownClasses: String, CaseIterable {
+	public enum Const: String {
+		// Generic is not supported for now
+		case typeRegex = #"[\w\[\]\:\s\.]*"#
+	}
+
 	case int = "Int"
 	case bool = "Bool"
 	case string = "String"

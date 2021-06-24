@@ -39,8 +39,14 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
     @Option(name: .long, help: "Input filename. To process multiple files, use --input-path instead.")
 	var inputFilename: String?
 
-    @Option(name: .long, help: "Output filename.")
-	var outputFilename: String
+    @Option(name: .long, help: "Output path. Warning: ALL CONTENTS INSIDE WILL BE DELETED!!!")
+	var outputPath: String?
+
+    @Option(name: .long, help: "Output filename. Write all tests to a single file.")
+	var outputFilename: String?
+
+    @Option(name: .long, help: "Additional header string other than importing Quick & Nimble. Can be more than 1.")
+	var headerString: [String] = []
 
 	private var allowedClasses: [String] { allowClasses?.components(separatedBy: ",") ?? [String]() }
 
@@ -73,6 +79,39 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 			throw GeneratorError.generic(message: "input path and filename can't both be empty.")
 		}
 
+		if let outputPath = outputPath {
+			try execute("rm -rf \(outputPath)")
+			try execute("mkdir -p \(outputPath)")
+		}
+
+		var fullOutput = ""
+		for filename in filenames {
+			var output = header(filename: filename)
+			guard !ignoredFilenames.contains(where: filename.contains) else {
+				log("Ignoring file: \(filename)")
+				continue
+			}
+			let code = try process(filename: filename)
+			output += code
+			output += footer
+			//log(code)
+
+			fullOutput += output
+			fullOutput += "\n"
+
+			if let outputPath = outputPath {
+				let outputFilename = "\(outputPath)/\(testClassName(filename: filename))Tests.swift"
+				let url = URL(fileURLWithPath: outputFilename)
+				try output.write(to: url, atomically: true, encoding: .utf8)
+			}
+		}
+		if let outputFilename = outputFilename {
+			let url = URL(fileURLWithPath: outputFilename)
+			try fullOutput.write(to: url, atomically: true, encoding: .utf8)
+		}
+
+		// The following "single file" writer should probably be deleted.
+		/*
 		var output = header
 		for filename in filenames {
 			guard !ignoredFilenames.contains(where: filename.contains) else {
@@ -87,6 +126,7 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 
         let url = URL(fileURLWithPath: outputFilename)
 		try output.write(to: url, atomically: true, encoding: .utf8)
+		*/
     }
 
 	// MARK: - helpers
@@ -118,18 +158,19 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 
 	// MARK: - processor
 
-	private var header: String { """
-		/// This file is generated on \(Date())
+	private func header(filename: String) -> String { 
+		"""
+		/// \(testClassName(filename: filename)) is generated on \(Date())
 
 		import Nimble
 		import Quick
-		import CoreData
-		@testable import LillyTogetherDev
+		\(headerString.joined(separator: "\n"))
 
-		class AutomatedTests: QuickSpec {
+		class \(testClassName(filename: filename)): QuickSpec {
 		\(spaces(4))override func spec() {
 
-		""" }
+		"""
+	}
 
 	private var footer: String { """
 		\(spaces(4))}
@@ -140,15 +181,30 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 		String(repeating: " ", count: count)
 	}
 
+	private func shortFilename(_ filename: String) -> String {
+		if let inputPath = inputPath {
+			return filename.replacingOccurrences(of: inputPath, with: "")
+		} else {
+			return filename
+		}
+	}
+
+	private func testClassName(filename: String) -> String {
+		return "Automated" + 
+			shortFilename(filename)
+			.trimmingCharacters(in: ["/"])
+			.replacingOccurrences(of: ".swift", with: "")
+			.replacingOccurrences(of: "./", with: "")
+			.replacingOccurrences(of: " ", with: "")
+			.replacingOccurrences(of: "/", with: "_")
+			.replacingOccurrences(of: "+", with: "_")
+			.replacingOccurrences(of: ".", with: "_") +
+			"Tests"
+	}
+
     private func process(filename: String) throws -> String {
         let url = URL(fileURLWithPath: filename)
-		let shortFilename: String
-		if let inputPath = inputPath {
-			shortFilename = filename.replacingOccurrences(of: inputPath, with: "")
-		} else {
-			shortFilename = filename
-		}
-		var output = "\(spaces(8))/// Generated from $PATH\(shortFilename)\n"
+		var output = "\(spaces(8))/// Generated from $PATH\(shortFilename(filename))\n"
 
         let content = try String(contentsOf: url, encoding: .utf8)
 		let classes = try ClassType.matched(from: content)
@@ -189,11 +245,14 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 			let variableName = aClass.name.prefix(1).lowercased() + aClass.name.dropFirst()
 			let initializerCode = "\(aClass.name)()"
 			let funcsCode = allFuncsCode(class: aClass, variableName: variableName)
+			let varCode = allVarCode(class: aClass, variableName: variableName)
+			//log("\(aClass.vars): \(varCode)")
 			output += """
 				\(spaces(12))/// Ensures '\(initializerCode)' isn't nil
 				\(spaces(12))it(\"should initialize \(aClass.name) from super class initializer \(superInitializer)\") {
 				\(spaces(16))let \(variableName) = \(initializerCode)
 				\(funcsCode)
+				\(varCode)
 				\(spaces(16))expect(\(variableName)).toNot(beNil())
 				\(spaces(12))}
 
@@ -205,7 +264,16 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 
 	/// Returns: lines of "variableName.functionName(paramList: ...)"
 	private func allFuncsCode(class aClass: ClassType, variableName: String) -> String {
-		if let str = aClass.baseClassName, stringUtility.matches(str, pattern: "^UI.*"), !allowedClasses.contains(aClass.name) {
+		// stringUtility.matches(str, pattern: "^UI.*")
+		if let str = aClass.baseClassName, !allowedClasses.contains(aClass.name), [
+			"UIViewController",
+			"UIPageViewController",
+			"UITableViewCell",
+			"UIView",
+			"UITableViewHeaderFooterView",
+			"UICollectionReusableView",
+		].contains(str) {
+			log("Unsupported UIKit component: \(str)")
 			return "\(spaces(16))/// UIKit functions are not supported for now."
 		}
 		var funcs = [String]()
@@ -215,7 +283,10 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 			}
 		}
 		return funcs.joined(separator: "\n")
+	}
 
+	private func allVarCode(class aClass: ClassType, variableName: String) -> String {
+		aClass.vars.map { $0.name }.joined(separator: "\n")
 	}
 
 	private func process(initializer: InitializerType, in aClass: ClassType) -> String {

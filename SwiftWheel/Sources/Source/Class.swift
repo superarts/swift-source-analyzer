@@ -40,6 +40,7 @@ public struct ClassType: StringUtilityRequired {
     public let funcs: [FuncType]
     public let classFuncs: [FuncType] // class, static
     public let classes: [ClassType] // nested class/struct/enum
+    public let vars: [VarType] // constants and variables
 
 	// Class only
 	public let baseClassName: String?
@@ -95,6 +96,7 @@ public struct ClassType: StringUtilityRequired {
 
 		self.initializers = try InitializerType.matched(from: content)
 		self.funcs = try FuncType.matched(from: content)
+		self.vars = try VarType.matched(from: content)
 
 		// TODO
 		classes = [ClassType]()
