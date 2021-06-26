@@ -17,6 +17,8 @@ public enum KnownClasses: String, CaseIterable {
 	case stringArray = "[String]"
 	case stringAnyObjectDictionary = "[String: AnyObject]"
 
+	case swiftUIView = "View"
+
 	public var defaultValue: String {
 		switch self {
 		case .int: return "0"
@@ -30,6 +32,8 @@ public enum KnownClasses: String, CaseIterable {
 		case .intArray: return "[0]"
 		case .stringArray: return "[\"\"]"
 		case .stringAnyObjectDictionary: return #"[String: AnyObject]()"#
+
+		case .swiftUIView: return "View"
 		}
 	}
 

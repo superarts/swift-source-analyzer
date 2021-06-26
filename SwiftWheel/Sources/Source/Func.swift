@@ -1,16 +1,3 @@
-/// Function categories
-public enum MemberCategory {
-	case `static`, `class`, instance, global
-
-	/// `!isStatic` could mean `instance` or `global`
-	public var isStatic: Bool {
-		switch self {
-		case .static, .class: return true
-		case .instance, .global: return false
-		}
-	}
-}
-
 /// Type to represent Swift functions
 // accessLevel func name(parameter1, parameter2, ...): returnType
 public struct FuncType {

@@ -4,11 +4,6 @@ public enum SourceError: Error {
 	case generic(message: String)
 }
 
-public enum AccessLevel: String, CaseIterable {
-    case `private`, `fileprivate`, `internal`, `public`, `open`
-	public var isPrivate: Bool { self == .private || self == .fileprivate }
-}
-
 // TODO: this should be removed as it's not part of the library
 public struct SourceScanner {
     //let filename: String

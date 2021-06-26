@@ -102,12 +102,36 @@ public enum StringUtility {
     }
 	*/
 
-	/// Parse line by line; firstly try to find a line that matches `pattern`,
-	/// then look for closed pairs of `head` and `tail`.
+	/// Parse line by line; firstly try to find a line that matches `pattern`, then...
+	/// - isExcludeMode:
+	///   - true: look for closed pairs oustide of `head` and `tail`
+	///   - false: look for closed pairs of `head` and `tail`
 	/// This parser is line based so it's not very strict.
-	public func findLines(_ content: String, pattern: String, head: String = "{", tail: String = "}") -> [String] {
-		let tuple = processLines(content, pattern: pattern, head: head, tail: tail)
-		return tuple.found
+	public func findLines(_ content: String, pattern: String, head: String = "{", tail: String = "}", isExcludeMode: Bool = false) -> [String] {
+		guard isExcludeMode else {
+			let tuple = processLines(content, pattern: pattern, head: head, tail: tail)
+			return tuple.found
+		}
+		let lines = content.split(whereSeparator: \.isNewline)
+		var index = 0
+		var isExcluding = false
+		var currentPairCount = 0
+		var results = [String]()
+		while index < lines.count {
+			let line = lines[index]
+			//print(line)
+			//print(isExcluding)
+			if !isExcluding, matches(String(line), pattern: pattern) {
+				results.append(String(line))
+			}
+			let headCount = line.components(separatedBy: head).count - 1
+			let tailCount = line.components(separatedBy: tail).count - 1
+			currentPairCount += headCount - tailCount
+			isExcluding = !(currentPairCount == 1)
+			index += 1
+		}
+		//print(results)
+		return results
 	}
 
 	/// The opposite of `findLines`

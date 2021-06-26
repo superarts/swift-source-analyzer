@@ -246,12 +246,14 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 			let initializerCode = "\(aClass.name)()"
 			let funcsCode = allFuncsCode(class: aClass, variableName: variableName)
 			let varCode = allVarCode(class: aClass, variableName: variableName)
-			//log("\(aClass.vars): \(varCode)")
+			//log("variables: \(aClass.vars): \(varCode)")
 			output += """
 				\(spaces(12))/// Ensures '\(initializerCode)' isn't nil
 				\(spaces(12))it(\"should initialize \(aClass.name) from super class initializer \(superInitializer)\") {
 				\(spaces(16))let \(variableName) = \(initializerCode)
+				\(spaces(16))// Methods
 				\(funcsCode)
+				\(spaces(16))// Properties
 				\(varCode)
 				\(spaces(16))expect(\(variableName)).toNot(beNil())
 				\(spaces(12))}
@@ -286,7 +288,16 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 	}
 
 	private func allVarCode(class aClass: ClassType, variableName: String) -> String {
-		aClass.vars.map { $0.name }.joined(separator: "\n")
+		aClass.vars.compactMap { v in
+			guard !v.accessLevel.isPrivate else {
+				return nil
+			}
+			if v.category.isStatic {
+				return "\(spaces(16))let _ = \(aClass.name).\(v.name)"
+			} else {
+				return "\(spaces(16))let _ = \(variableName).\(v.name)"
+			}
+		}.joined(separator: "\n")
 	}
 
 	private func process(initializer: InitializerType, in aClass: ClassType) -> String {
@@ -317,11 +328,16 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 
 		let variableName = aClass.name.prefix(1).lowercased() + aClass.name.dropFirst()
 		let funcsCode = allFuncsCode(class: aClass, variableName: variableName)
+		let varCode = allVarCode(class: aClass, variableName: variableName)
+		//log("variables: \(aClass.vars): \(varCode)")
 		return """
 			\(spaces(12))/// Ensures '\(initializerCode)' isn't nil
 			\(spaces(12))it(\"should initialize \(aClass.name)\") {
 			\(spaces(16))let \(variableName) = \(initializerCode)
+			\(spaces(16))// Methods
 			\(funcsCode)
+			\(spaces(16))// Properties
+			\(varCode)
 			\(spaces(16))expect(\(variableName)).toNot(beNil())
 			\(spaces(12))}
 
