@@ -4,7 +4,7 @@ all: clean debug
 	./$(NAME) --verbose \
 		--input-path ~/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia/ \
 		--allow-classes SlideMenuController,MySymptomsBaseViewController \
-		--ignore-classes BetterSegmentedControl,AlertActionStruct,TextProperties \
+		--ignore-classes BetterSegmentedControl,AlertActionStruct,TextProperties,PatientSymptom,AdvertisementData,DailyQuestionsViewController,RefillLastFilledViewController,RefillReminderEditViewController,RefillSetupSupplyViewController \
 		--ignore-filenames CustomUIButton.swift \
 		--ignore-funcnames googleAnalyticsTrackingId,tappedCrop,serviceName,urlString,pathForService,openUrlPathForService \
 		--output-path ~/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudiaTests/AutomatedTests/ \
@@ -18,6 +18,7 @@ all: clean debug
 		--input-filename /Users/leo/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia/Sources/View/WelcomeViewController.swift \
 		--input-filename /Users/leo/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia//Sources/ReusableComponent/OnboardingLottieView.swift \
 		--input-filename /Users/leo/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia//Sources/ReusableComponent/CustomUIButton.swift \
+		--input-filename /Users/leo/prj/ios/virtual-claudia/VirtualClaudia/VirtualClaudia/Sources/Helper/AcceptanceVersionHelper.swift \
 
 	# TODO
 	# Support Tuple: CustomUIButton.swift

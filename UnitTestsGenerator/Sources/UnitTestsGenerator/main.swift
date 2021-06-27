@@ -84,6 +84,16 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 			try execute("mkdir -p \(outputPath)")
 		}
 
+		for filename in filenames {
+			log("Building class list from: \(filename)")
+			do {
+				try Builder.shared.build(filename: filename)
+			} catch let error {
+				log("Skipping due to error: \(error)")
+			}
+		}
+		log("Found class(es): \(Builder.shared.classes.count)")
+
 		var fullOutput = ""
 		for filename in filenames {
 			var output = header(filename: filename)
@@ -238,44 +248,90 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 			output += process(initializer: initializer, in: aClass)
 		}
 
-		if aClass.initializers.isEmpty,
-			let baseClass = aClass.baseClassName,
-			let superInitializer = KnownClasses.defaultValue(typeName: baseClass)
-		{
-			let variableName = aClass.name.prefix(1).lowercased() + aClass.name.dropFirst()
-			let initializerCode = "\(aClass.name)()"
-			let funcsCode = allFuncsCode(class: aClass, variableName: variableName)
-			let varCode = allVarCode(class: aClass, variableName: variableName)
-			//log("variables: \(aClass.vars): \(varCode)")
-			output += """
-				\(spaces(12))/// Ensures '\(initializerCode)' isn't nil
-				\(spaces(12))it(\"should initialize \(aClass.name) from super class initializer \(superInitializer)\") {
-				\(spaces(16))let \(variableName) = \(initializerCode)
-				\(spaces(16))// Methods
-				\(funcsCode)
-				\(spaces(16))// Properties
-				\(varCode)
-				\(spaces(16))expect(\(variableName)).toNot(beNil())
-				\(spaces(12))}
-
-				"""
+		guard aClass.category == .class else {
+			log("Skipping non-class type: \(aClass.category) \(aClass.name)")
+			return output
 		}
 
+		guard aClass.initializers.isEmpty else {
+			log("Skipping default initializer: \(aClass.category) \(aClass.name)")
+			return output
+		}
+
+		guard let (_, superInitializer, initializerParameters) = getBaseClass(aClass) else {
+			log("Unknown class: \(aClass.name), \(aClass.baseClassName ?? "N/A")")
+			return output
+		}
+
+		output += allCode(
+			class: aClass,
+			initializerCode: "\(aClass.name)\(initializerParameters)",
+			comment: "should initialize \(aClass.name) from super class initializer \(superInitializer)"
+		)
 		return output
+	}
+
+	/// Find the root base class
+	private func getBaseClass(_ theClass: ClassType) -> (baseClassName: String, superInitializer: String, initializerParameters: String)? {
+		var aClass = theClass
+		var shouldBreak = false
+		//log("----")
+		while !shouldBreak {
+			//log("----")
+			//log(aClass.name)
+			//log(aClass.baseClassName ?? "N/A")
+			guard let baseClassName = aClass.baseClassName else {
+				return nil
+			}
+			//log(baseClassName)
+			if let superInitializer = KnownClasses.defaultValue(typeName: baseClassName),
+				let initializerParameters = KnownClasses.parentInitializerParameters(typeName: baseClassName)
+			{
+				//log("found")
+				return (baseClassName: baseClassName, superInitializer: superInitializer, initializerParameters: initializerParameters)
+			} else if let c = Builder.shared.classes[baseClassName] {
+				//log("next")
+				aClass = c
+			} else {
+				//log("break")
+				shouldBreak = true
+			}
+		}
+		return nil
+	}
+
+	/// All test case code
+	private func allCode(class aClass: ClassType, initializerCode: String, comment: String) -> String {
+		let variableName = aClass.name.prefix(1).lowercased() + aClass.name.dropFirst()
+		let funcsCode = allFuncsCode(class: aClass, variableName: variableName)
+		let varCode = allVarCode(class: aClass, variableName: variableName)
+		//log("variables: \(aClass.vars): \(varCode)")
+		return """
+			\(spaces(12))/// Ensures '\(initializerCode)' isn't nil
+			\(spaces(12))it(\"\(comment)\") {
+			\(spaces(16))let \(variableName) = \(initializerCode)
+			\(spaces(16))// Methods
+			\(funcsCode)
+			\(spaces(16))// Properties
+			\(varCode)
+			\(spaces(16))expect(\(variableName)).toNot(beNil())
+			\(spaces(12))}
+
+			"""
 	}
 
 	/// Returns: lines of "variableName.functionName(paramList: ...)"
 	private func allFuncsCode(class aClass: ClassType, variableName: String) -> String {
 		// stringUtility.matches(str, pattern: "^UI.*")
-		if let str = aClass.baseClassName, !allowedClasses.contains(aClass.name), [
+		if let (baseClassName, _, _) = getBaseClass(aClass), !allowedClasses.contains(aClass.name), [
 			"UIViewController",
 			"UIPageViewController",
 			"UITableViewCell",
 			"UIView",
 			"UITableViewHeaderFooterView",
 			"UICollectionReusableView",
-		].contains(str) {
-			log("Unsupported UIKit component: \(str)")
+		].contains(baseClassName) {
+			log("Unsupported UIKit component: \(baseClassName)")
 			return "\(spaces(16))/// UIKit functions are not supported for now."
 		}
 		var funcs = [String]()
@@ -324,24 +380,12 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 		guard let param = process(parameters: initializer.parameters) else {
 			return ""
 		}
-		let initializerCode = "\(aClass.name)\(param)"
 
-		let variableName = aClass.name.prefix(1).lowercased() + aClass.name.dropFirst()
-		let funcsCode = allFuncsCode(class: aClass, variableName: variableName)
-		let varCode = allVarCode(class: aClass, variableName: variableName)
-		//log("variables: \(aClass.vars): \(varCode)")
-		return """
-			\(spaces(12))/// Ensures '\(initializerCode)' isn't nil
-			\(spaces(12))it(\"should initialize \(aClass.name)\") {
-			\(spaces(16))let \(variableName) = \(initializerCode)
-			\(spaces(16))// Methods
-			\(funcsCode)
-			\(spaces(16))// Properties
-			\(varCode)
-			\(spaces(16))expect(\(variableName)).toNot(beNil())
-			\(spaces(12))}
-
-			"""
+		return allCode(
+			class: aClass,
+			initializerCode: "\(aClass.name)\(param)",
+			comment: "should initialize \(aClass.name)"
+		)
 	}
 
 	/// Returns: nil when any parameter in `parameters` doesn't have a default value

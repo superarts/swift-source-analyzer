@@ -94,9 +94,15 @@ public struct ClassType: StringUtilityRequired {
 		}
 		//print("||||\(content)||||\(captured)||||")
 
-		self.initializers = try InitializerType.matched(from: content)
 		self.funcs = try FuncType.matched(from: content)
 		self.vars = try VarType.matched(from: content)
+
+		let initializers = try InitializerType.matched(from: content)
+		if initializers.isEmpty, self.vars.isEmpty, category == .struct, let initializer = try? InitializerType(string: "    init() { }") {
+			self.initializers = [initializer]
+		} else {
+			self.initializers = initializers
+		}
 
 		// TODO
 		classes = [ClassType]()

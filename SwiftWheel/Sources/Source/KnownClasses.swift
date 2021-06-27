@@ -17,6 +17,9 @@ public enum KnownClasses: String, CaseIterable {
 	case stringArray = "[String]"
 	case stringAnyObjectDictionary = "[String: AnyObject]"
 
+	//case cdManagedObjectContext = "NSManagedObjectContext"
+	//case cdManagedObject = "NSManagedObjectContext"
+
 	case swiftUIView = "View"
 
 	public var defaultValue: String {
@@ -33,17 +36,20 @@ public enum KnownClasses: String, CaseIterable {
 		case .stringArray: return "[\"\"]"
 		case .stringAnyObjectDictionary: return #"[String: AnyObject]()"#
 
-		case .swiftUIView: return "View"
+		//case .cdManagedObjectContenxt: return #"NSPersistentContainer(name: "AutomatedTests").viewContext"#
+		//case .cdManagedObject: return #"NSPersistentContainer(name: "AutomatedTests").viewContext"#
+
+		case .swiftUIView: return "View()"
 		}
 	}
 
 	/// Returns `nil` if it's not a known class
-	public static func defaultValue(typeName string: String, isOptional: Bool = false) -> String? {
+	public static func defaultValue(typeName: String, isOptional: Bool = false) -> String? {
 		if isOptional {
 			return "nil"
 		}
 
-		if let theClass = KnownClasses(rawValue: string) {
+		if let theClass = KnownClasses(rawValue: typeName) {
 			return theClass.defaultValue
 		}
 
@@ -52,25 +58,46 @@ public enum KnownClasses: String, CaseIterable {
 		if [
 			"UIViewControllerTransitionCoordinator", 
 			"NSManagedObjectContext",
-			"NSManagedObject",
+			//"NSManagedObject",
 			"UICollectionView",
 			//"UIViewController",
 			//"UITableViewCell",
 			//"UIView",
-		].contains(where: string.contains) {
+			"UIStoryboardSegue",
+		].contains(where: typeName.contains) {
 			return nil
 		}
 
 		// Enums like UIImagePickerController.SourceType are not supported
-		guard !string.contains(".") else {
+		guard !typeName.contains(".") else {
 			return nil
 		}
 
 		let stringUtility = StringUtility()
-		if stringUtility.matches(string, pattern: "^(NS|UI|CG).*") {
-			return string.trimmingCharacters(in: .whitespacesAndNewlines) + "()"
+		if stringUtility.matches(typeName, pattern: "^(NS|UI|CG).*") {
+			return typeName.trimmingCharacters(in: .whitespacesAndNewlines) + "()"
 		}
 
 		return nil
 	}
+
+	public static func parentInitializerParameters(typeName: String) -> String? {
+		if typeName == "NSManagedObject" {
+			return #"(context: NSPersistentContainer(name: "AutomatedTests").viewContext)"#
+		} else if defaultValue(typeName: typeName) != nil {
+			return "()"
+		} else {
+			return nil
+		}
+	}
+
+	/*
+	public static func testExpectation(typeName: String) -> String {
+		if typeName == "NSManagedObject" {
+			return #"(context: NSPersistentContainer(name: "AutomatedTests").viewContext)"#
+		} else {
+			return "toNot(beNil())"
+		}
+	}
+	*/
 }
