@@ -21,17 +21,17 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
     @Flag(name: .long, help: "Do NOT execute any shell command at all. Not supported by LillyUtilityCLI classes yet. DEBUG ONLY.")
     var dryRun: Bool = false
 
-    @Option(name: .long, help: "Allow functions of these classes to be tested. Divided by comma, e.g. IgnoredClass1,IgnoredClass2")
-	var allowClasses: String?
+    @Option(name: .long, help: "Allow functions of these classes to be tested. Can be multiple.")
+	var allowClass: [String] = []
 
-    @Option(name: .long, help: "Ignored classes. Divided by comma, e.g. IgnoredClass1,IgnoredClass2")
-	var ignoreClasses: String?
+    @Option(name: .long, help: "Ignored classes. Can be multiple.")
+	var ignoreClass: [String] = []
 
-    @Option(name: .long, help: "Ignored files. Divided by comma, e.g. IgnoredClass1.swift,IgnoredClass2.swift")
-	var ignoreFilenames: String?
+    @Option(name: .long, help: "Ignored files. Can be multiple.")
+	var ignoreFilename: [String] = []
 
-    @Option(name: .long, help: "Ignored function namesi. Divided by comma, e.g. func1,func2")
-	var ignoreFuncnames: String?
+    @Option(name: .long, help: "Ignored function namesi. Can be multiple.")
+	var ignoreFunction: [String] = []
 
     @Option(name: .long, help: "Input path with Swift files.")
 	var inputPath: String?
@@ -45,16 +45,8 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
     @Option(name: .long, help: "Output filename. Write all tests to a single file.")
 	var outputFilename: String?
 
-    @Option(name: .long, help: "Additional header string other than importing Quick & Nimble. Can be more than 1.")
+    @Option(name: .long, help: "Additional header string other than importing Quick & Nimble. Can be multiple.")
 	var headerString: [String] = []
-
-	private var allowedClasses: [String] { allowClasses?.components(separatedBy: ",") ?? [String]() }
-
-	private var ignoredClasses: [String] { ignoreClasses?.components(separatedBy: ",") ?? [String]() }
-
-	private var ignoredFilenames: [String] { ignoreFilenames?.components(separatedBy: ",") ?? [String]() }
-
-	private var ignoredFuncnames: [String] { ignoreFuncnames?.components(separatedBy: ",") ?? [String]() }
 
     private struct Const {
 		struct Color {
@@ -97,7 +89,7 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 		var fullOutput = ""
 		for filename in filenames {
 			var output = header(filename: filename)
-			guard !ignoredFilenames.contains(where: filename.contains) else {
+			guard !ignoreFilename.contains(where: filename.contains) else {
 				log("Ignoring file: \(filename)")
 				continue
 			}
@@ -124,7 +116,7 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 		/*
 		var output = header
 		for filename in filenames {
-			guard !ignoredFilenames.contains(where: filename.contains) else {
+			guard !ignoreFilename.contains(where: filename.contains) else {
 				log("Ignoring file: \(filename)")
 				continue
 			}
@@ -239,7 +231,7 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 			return ""
 		}
 
-		guard !ignoredClasses.contains(aClass.name) else {
+		guard !ignoreClass.contains(aClass.name) else {
 			log("Ignoring class: \(aClass.name)")
 			return ""
 		}
@@ -323,7 +315,7 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 	/// Returns: lines of "variableName.functionName(paramList: ...)"
 	private func allFuncsCode(class aClass: ClassType, variableName: String) -> String {
 		// stringUtility.matches(str, pattern: "^UI.*")
-		if let (baseClassName, _, _) = getBaseClass(aClass), !allowedClasses.contains(aClass.name), [
+		if let (baseClassName, _, _) = getBaseClass(aClass), !allowClass.contains(aClass.name), [
 			"UIViewController",
 			"UIPageViewController",
 			"UITableViewCell",
@@ -426,7 +418,7 @@ struct UnitTestsGenerator: ParsableCommand, StringUtilityRequired, OSRequired {
 	}
 
 	private func process(function: FuncType, className: String, variableName: String) -> String? {
-		guard !ignoredFuncnames.contains(function.name) else {
+		guard !ignoreFunction.contains(function.name) else {
 			return nil
 		}
 		guard !function.accessLevel.isPrivate else {
