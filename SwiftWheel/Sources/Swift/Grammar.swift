@@ -47,10 +47,8 @@ enum LookUpRule {
 }
 
 struct Attribute {
-	/*
-	@attribute name
-	@attribute name(attribute arguments)
-	*/
+	//@attribute name
+	//@attribute name(attribute arguments)
 }
 
 public protocol LexiconElement {
@@ -83,11 +81,9 @@ public struct Grammer {
 		["\u{0009}"],
 		["\u{0020}"],
 	]
-	/*
-	public let inlineSpaces: [[String]] = [
-		[inlineSpace, inlineSpace?],
-	]
-	*/
+	//public let inlineSpaces: [[String]] = [
+	//	[inlineSpace, inlineSpace?],
+	//]
 	public init() { }
 }
 

@@ -21,3 +21,12 @@ doc:
 	echo '```console' >> USAGE.md
 	./$(NAME) --help >> USAGE.md
 	echo '```' >> USAGE.md
+
+test: clean debug
+	./$(NAME) --verbose \
+		--input-path ../SwiftWheel/Sources/ \
+		--output-path ../SwiftWheel/Tests/Automated \
+		--header-string '@testable import SwiftWheel'
+
+	# \
+		--output-filename ../SwiftWheel/Tests/AutomatedTests.swift \

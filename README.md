@@ -6,7 +6,8 @@ This repo provides libraries and CLI tools to analyze and generate Swift source 
 
 ## Components
 
-- `SwiftWheel`: common helper library that reinvents all sort of wheels.
+- [SwiftWheel](SwiftWheel): a common helper library that reinvents all sort of wheels in Swift.
+- [Unit tests generator](UnitTestsGenerator): a CLI tool that generates unit tests for your project.
 
 ## History
 
